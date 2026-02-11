@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LEXI OS // NEURAL COCKPIT</title>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #050510;
+            --grid-color: rgba(0, 255, 255, 0.05);
+            --neon-blue: #00f3ff;
+            --neon-pink: #bc13fe;
+            --neon-green: #0aff0a;
+            --glass-bg: rgba(10, 20, 30, 0.6);
+            --border-color: rgba(0, 243, 255, 0.3);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background-color: var(--bg-color);
+            background-image:
+                linear-gradient(var(--grid-color) 1px, transparent 1px),
+                linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+            background-size: 30px 30px;
+            color: var(--neon-blue);
+            font-family: 'Share Tech Mono', monospace;
+            overflow-x: hidden;
+            height: 100vh;
+            display: grid;
+            grid-template-rows: auto 1fr;
+        }
+
+        /* Scanline Effect */
+        body::after {
+            content: " ";
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            z-index: 2;
+            background-size: 100% 2px, 3px 100%;
+            pointer-events: none;
+        }
+
+        header {
+            padding: 1rem 2rem;
+            border-bottom: 2px solid var(--border-color);
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .logo {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2rem;
+            font-weight: 900;
+            text-shadow: 0 0 10px var(--neon-blue);
+            letter-spacing: 2px;
+        }
+
+        .status-badge {
+            background: rgba(0, 243, 255, 0.1);
+            border: 1px solid var(--neon-blue);
+            padding: 0.25rem 1rem;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 1px;
+            box-shadow: 0 0 10px rgba(0, 243, 255, 0.2);
+        }
+
+        main {
+            padding: 2rem;
+            display: grid;
+            grid-template-columns: 300px 1fr 300px;
+            grid-template-rows: auto auto 1fr;
+            gap: 1.5rem;
+            height: 100%;
+            overflow-y: auto;
+        }
+
+        .panel {
+            background: var(--glass-bg);
+            border: 1px solid var(--border-color);
+            position: relative;
+            padding: 1.5rem;
+            backdrop-filter: blur(5px);
+            clip-path: polygon(0 10px,
+                    10px 0,
+                    100% 0,
+                    100% calc(100% - 10px),
+                    calc(100% - 10px) 100%,
+                    0 100%);
+        }
+
+        .panel::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border: 1px solid transparent;
+            /* Corner accents */
+            background:
+                linear-gradient(45deg, var(--neon-blue) 0%, transparent 5%) top left,
+                linear-gradient(-45deg, var(--neon-blue) 0%, transparent 5%) bottom right;
+            background-size: 20px 20px;
+            background-repeat: no-repeat;
+            pointer-events: none;
+        }
+
+        .panel h2 {
+            margin-top: 0;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.1rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.5rem;
+            margin-bottom: 1rem;
+            color: #fff;
+            text-shadow: 0 0 5px var(--neon-blue);
+        }
+
+        /* Core Visualization */
+        #core-panel {
+            grid-column: 2;
+            grid-row: 1 / span 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid var(--neon-blue);
+            box-shadow: 0 0 30px rgba(0, 243, 255, 0.1) inset;
+        }
+
+        .core-orb {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #fff, var(--neon-blue), transparent);
+            box-shadow: 0 0 50px var(--neon-blue), 0 0 100px var(--neon-blue);
+            display: grid;
+            place-items: center;
+            font-family: 'Orbitron';
+            font-weight: bold;
+            font-size: 1.5rem;
+            color: #000;
+            animation: pulse 2s infinite ease-in-out;
+            position: relative;
+        }
+
+        .core-ring {
+            position: absolute;
+            width: 200px;
+            height: 200px;
+            border: 2px dashed rgba(0, 243, 255, 0.5);
+            border-radius: 50%;
+            animation: spin 10s linear infinite;
+        }
+
+        .core-ring-2 {
+            position: absolute;
+            width: 240px;
+            height: 240px;
+            border: 1px solid rgba(188, 19, 254, 0.3);
+            border-radius: 50%;
+            animation: spin-reverse 15s linear infinite;
+        }
+
+        /* Metrics */
+        .metric-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.8rem;
+            font-size: 0.9rem;
+        }
+
+        .bar-container {
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            margin-top: 4px;
+            overflow: hidden;
+        }
+
+        .bar-fill {
+            height: 100%;
+            background: var(--neon-blue);
+            width: 0%;
+            transition: width 0.5s ease-out;
+            box-shadow: 0 0 10px var(--neon-blue);
+        }
+
+        .bar-fill.warning {
+            background: var(--neon-pink);
+            box-shadow: 0 0 10px var(--neon-pink);
+        }
+
+        .bar-fill.ok {
+            background: var(--neon-green);
+            box-shadow: 0 0 10px var(--neon-green);
+        }
+
+        /* Ki Levels */
+        .ki-box {
+            border: 1px solid var(--grid-color);
+            padding: 0.5rem;
+            margin-bottom: 0.5rem;
+            opacity: 0.5;
+            transition: all 0.3s;
+        }
+
+        .ki-box.active {
+            opacity: 1;
+            border-color: var(--neon-pink);
+            background: rgba(188, 19, 254, 0.1);
+            box-shadow: 0 0 15px rgba(188, 19, 254, 0.2);
+            transform: scale(1.02);
+        }
+
+        /* Terminal */
+        .cli-window {
+            grid-column: 1 / span 3;
+            background: #000;
+            font-family: 'Share Tech Mono', monospace;
+            padding: 1rem;
+            height: 200px;
+            overflow: hidden;
+            border: 1px solid #333;
+            position: relative;
+        }
+
+        .cli-content {
+            height: 100%;
+            overflow-y: hidden;
+            /* Auto-scrolled by JS */
+            color: var(--neon-green);
+            font-size: 0.85rem;
+            line-height: 1.4;
+        }
+
+        /* Animations */
+        @keyframes pulse {
+            0% {
+                transform: scale(0.95);
+                opacity: 0.8;
+            }
+
+            50% {
+                transform: scale(1.05);
+                opacity: 1;
+            }
+
+            100% {
+                transform: scale(0.95);
+                opacity: 0.8;
+            }
+        }
+
+        @keyframes spin {
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes spin-reverse {
+            100% {
+                transform: rotate(-360deg);
+            }
+        }
+
+        /* Utility */
+        .txt-right {
+            text-align: right;
+        }
+
+        .text-neon {
+            color: var(--neon-blue);
+        }
+
+        .text-pink {
+            color: var(--neon-pink);
+        }
+
+        .text-green {
+            color: var(--neon-green);
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <div class="logo">LEXI // OS</div>
+        <div style="display: flex; gap: 1rem;">
+            <div class="status-badge" id="clock">00:00:00</div>
+            <div class="status-badge text-green">ONLINE</div>
+        </div>
+    </header>
+
+    <main>
+        <!-- LEFT COLUMN: SYSTEM STATS -->
+        <div class="panel">
+            <h2>SYSTEM VITALS</h2>
+            <div class="metric-row">
+                <span>CPU LOAD</span>
+                <span id="cpu-val" class="text-pink">0%</span>
+            </div>
+            <div class="bar-container">
+                <div id="cpu-bar" class="bar-fill warning"></div>
+            </div>
+
+            <div class="metric-row" style="margin-top: 1rem;">
+                <span>MEMORY</span>
+                <span id="ram-val" class="text-neon">0%</span>
+            </div>
+            <div class="bar-container">
+                <div id="ram-bar" class="bar-fill"></div>
+            </div>
+
+            <div class="metric-row" style="margin-top: 1rem;">
+                <span>UPTIME</span>
+                <span id="uptime-val">0h 0m</span>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2>SERVICES</h2>
+            <div class="metric-row">
+                <span>GATEWAY</span>
+                <span id="srv-gateway" class="text-green">● ACTIVE</span>
+            </div>
+            <div class="metric-row">
+                <span>EXEC BRIDGE</span>
+                <span id="srv-bridge" class="text-green">● ACTIVE</span>
+            </div>
+            <div class="metric-row">
+                <span>ANTFARM</span>
+                <span id="srv-antfarm" class="text-green">● ACTIVE</span>
+            </div>
+        </div>
+
+        <!-- MIDDLE COLUMN: THE CORE -->
+        <div class="panel" id="core-panel">
+            <div class="core-ring"></div>
+            <div class="core-ring-2"></div>
+            <div class="core-orb" id="core-orb">
+                CORE
+            </div>
+            <div style="margin-top: 2rem; letter-spacing: 4px; font-size: 0.8rem; opacity: 0.7;">
+                NEURAL ENGINE: ENGAGED
+            </div>
+        </div>
+
+        <!-- RIGHT COLUMN: CAPABILITIES & KI -->
+        <div class="panel">
+            <h2>MISSION CONTROL</h2>
+            <div class="metric-row">
+                <span>DISCORD</span>
+                <span id="discord-status" class="text-green">● @LexiBot</span>
+            </div>
+            <div class="metric-row" style="margin-top:0.5rem">
+                <span>HEARTBEAT</span>
+                <span id="heartbeat-status" class="text-neon">ACTIVE</span>
+            </div>
+            <div style="font-size: 0.75rem; color: #aaa; margin-bottom: 0.5rem; text-align: right;">
+                MODEL: <span id="heartbeat-model">...</span>
+            </div>
+
+            <div style="border-top: 1px solid var(--border-color); margin-top: 0.5rem; padding-top: 0.5rem;">
+                <span style="font-size: 0.8rem;">CRON TASKS</span>
+                <ul id="cron-list"
+                    style="padding-left: 1rem; margin: 0.2rem 0; font-size: 0.75rem; color: var(--neon-green);">
+                    <li>Scanning...</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2>POWER LEVEL</h2>
+            <div class="ki-box">
+                <div class="metric-row"><span>SS1 (Awakening)</span><span>$20</span></div>
+            </div>
+            <div class="ki-box active">
+                <div class="metric-row"><span class="text-pink">SS2 (Lightning)</span><span>$40</span></div>
+                <div style="font-size: 0.7rem;">CURRENT OUTPUT</div>
+            </div>
+            <div class="ki-box">
+                <div class="metric-row"><span>SS3 (Empire)</span><span>$60</span></div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2>ARMORY (TIER 4)</h2>
+            <ul style="list-style: none; padding: 0; font-size: 0.85rem; line-height: 1.6;">
+                <li>> FIREWORKS (Llama 3.1)</li>
+                <li>> AIMLAPI (GPT-4o/Claude)</li>
+                <li>> REPLICATE (Flux Gen)</li>
+                <li>> CLAUDE CODE (CLI)</li>
+            </ul>
+        </div>
+
+        <!-- BOTTOM ROW: TERMINAL -->
+        <div class="cli-window">
+            <div
+                style="position: absolute; top: 0; right: 0; background: var(--neon-blue); color: #000; padding: 0.2rem 0.5rem; font-weight: bold; font-size: 0.8rem;">
+                TERMINAL_OUT
+            </div>
+            <div class="cli-content" id="cli-content">
+                > INITIALIZING LEXI OS KERNEL...<br>
+                > MOUNTING BRAIN SECTORS... OK<br>
+                > ESTABLISHING NEURAL LINK... OK<br>
+            </div>
+            <div id="ai-thought" style="
+                position: absolute; 
+                bottom: 10px; 
+                right: 10px; 
+                color: var(--neon-pink); 
+                font-size: 0.8rem; 
+                background: rgba(0,0,0,0.8); 
+                padding: 5px; 
+                border: 1px solid var(--neon-pink);
+                max-width: 60%;
+                text-align: right;
+                display: none;">
+                Thinking...
+            </div>
+        </div>
+
+    </main>
+
+    <footer style="
+        padding: 1rem;
+        text-align: center;
+        font-family: 'Share Tech Mono', monospace;
+        color: var(--neon-pink);
+        text-shadow: 0 0 10px var(--neon-pink), 0 0 20px var(--neon-pink);
+        border-top: 1px solid var(--border-color);
+        background: rgba(0, 0, 0, 0.4);
+        z-index: 10;
+    ">
+        Powered by Lexi OS
+    </footer>
+
+    <script>
+        function updateClock() {
+            document.getElementById('clock').innerText = new Date().toLocaleTimeString();
+        }
+        setInterval(updateClock, 1000);
+
+        // Fetch Real Data from HQ Server
+        function updateStats() {
+            fetch('http://localhost:8999/stats')
+                .then(res => res.json())
+                .then(data => {
+                    // Update CPU
+                    const cpu = data.system.cpu;
+                    document.getElementById('cpu-val').innerText = cpu + '%';
+                    document.getElementById('cpu-bar').style.width = Math.min(cpu, 100) + '%';
+
+                    // Update RAM
+                    const ram = data.system.ram;
+                    document.getElementById('ram-val').innerText = ram + '%';
+                    document.getElementById('ram-bar').style.width = Math.min(ram, 100) + '%';
+
+                    // Update Uptime
+                    const hrs = Math.floor(data.system.uptime / 3600);
+                    const mins = Math.floor((data.system.uptime % 3600) / 60);
+                    document.getElementById('uptime-val').innerText = `${hrs}h ${mins}m`;
+
+                    // Pulse Core Speed based on CPU
+                    // Lower duration = faster pulse
+                    const speed = Math.max(0.5, 2 - (cpu / 50));
+                    document.getElementById('core-orb').style.animationDuration = speed + 's';
+
+                    // Update Services
+                    updateServiceBadge('srv-gateway', data.services.openclaw);
+                    updateServiceBadge('srv-bridge', data.services['exec-bridge']);
+                    updateServiceBadge('srv-antfarm', data.services.antfarm);
+
+                    // Update Mission Control
+                    const discord = data.monitoring.discord;
+                    const dsEl = document.getElementById('discord-status');
+                    if (discord.status) {
+                        dsEl.className = 'text-green';
+                        dsEl.innerText = '● ' + discord.bot;
+                    } else {
+                        dsEl.className = 'text-pink';
+                        dsEl.innerText = '● OFFLINE';
+                    }
+
+                    const heartbeat = data.monitoring.heartbeat;
+                    const hbEl = document.getElementById('heartbeat-status');
+                    document.getElementById('heartbeat-model').innerText = heartbeat.model;
+                    if (heartbeat.status) {
+                        hbEl.className = 'text-green';
+                        hbEl.innerText = '● ACTIVE';
+                    } else {
+                        hbEl.className = 'text-pink';
+                        hbEl.innerText = '● STOPPED';
+                    }
+
+                    // Update Cron
+                    const cronList = document.getElementById('cron-list');
+                    cronList.innerHTML = '';
+                    if (data.monitoring.cron.length > 0) {
+                        data.monitoring.cron.forEach(job => {
+                            const li = document.createElement('li');
+                            li.innerText = job;
+                            cronList.appendChild(li);
+                        });
+                    } else {
+                        cronList.innerHTML = '<li style="color:#666">No active jobs</li>';
+                    }
+
+                    // Update Thought
+                    const thoughtEl = document.getElementById('ai-thought');
+                    if (data.monitoring.thought && data.monitoring.thought !== "Thinking..." && data.monitoring.thought !== "Offline") {
+                        thoughtEl.innerText = data.monitoring.thought;
+                        thoughtEl.style.display = 'block';
+                    }
+
+                    // Random Terminal Logs
+                    addLog(`[SYSTEM] CPU Load: ${cpu}% | RAM: ${ram}%`);
+                    if (Math.random() > 0.9) addLog(`[ANTFARM] Scanning queue... 0 jobs.`);
+                })
+                .catch(err => {
+                    console.log("Offline mode");
+                    addLog("[WARN] HQ LINK OFFLINE - RETRYING...");
+                });
+        }
+
+        function updateServiceBadge(id, active) {
+            const el = document.getElementById(id);
+            if (active) {
+                el.className = 'text-green';
+                el.innerText = '● ACTIVE';
+            } else {
+                el.className = 'text-pink';
+                el.innerText = '● OFFLINE';
+            }
+        }
+
+        function addLog(msg) {
+            const term = document.getElementById('cli-content');
+            const time = new Date().toLocaleTimeString();
+            const div = document.createElement('div');
+            div.innerHTML = `<span style="opacity:0.5">[${time}]</span> ${msg}`;
+            term.appendChild(div);
+            // Auto scroll
+            term.scrollTop = term.scrollHeight;
+            while (term.children.length > 20) term.removeChild(term.firstChild);
+        }
+
+        setInterval(updateStats, 2000);
+        updateStats();
+    </script>
+</body>
+
+</html>
