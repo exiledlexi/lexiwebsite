@@ -299,6 +299,17 @@
 </head>
 
 <body>
+    <!-- BOOT OVERLAY -->
+    <div id="boot-screen" style="
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: black; z-index: 9999;
+        display: flex; flex-direction: column; justify-content: center; align-items: center;
+        color: var(--neon-green); font-family: 'Share Tech Mono', monospace;
+    ">
+        <div style="font-size: 2rem; letter-spacing: 5px; margin-bottom: 20px;">LEXI // OS <span class="blink">_</span>
+        </div>
+        <div id="boot-log" style="font-size: 0.8rem; opacity: 0.7; width: 300px;"></div>
+    </div>
 
     <header>
         <div class="logo">LEXI // OS</div>
@@ -561,6 +572,65 @@
             term.scrollTop = term.scrollHeight;
             while (term.children.length > 20) term.removeChild(term.firstChild);
         }
+
+        // Boot Sequence
+        const bootLog = document.getElementById('boot-log');
+        const bootScreen = document.getElementById('boot-screen');
+        const logs = [
+            "INITIALIZING KERNEL...",
+            "LOADING MODULES: [MIND] [VISION] [VOICE]",
+            "ESTABLISHING NEURAL LINK...",
+            "CONNECTING TO HQ SERVER...",
+            "MOUNTING FILE SYSTEM...",
+            "SYSTEM READY."
+        ];
+
+        let logIdx = 0;
+        function showLog() {
+            if (logIdx < logs.length) {
+                bootLog.innerText = logs[logIdx];
+                logIdx++;
+                setTimeout(showLog, 300 + Math.random() * 500);
+            } else {
+                setTimeout(() => {
+                    bootScreen.style.transition = "opacity 1s";
+                    bootScreen.style.opacity = 0;
+                    setTimeout(() => bootScreen.remove(), 1000);
+                }, 500);
+            }
+        }
+
+        // Start Boot
+        showLog();
+
+        // Boot Sequence
+        const bootLog = document.getElementById('boot-log');
+        const bootScreen = document.getElementById('boot-screen');
+        const logs = [
+            "INITIALIZING KERNEL...",
+            "LOADING MODULES: [MIND] [VISION] [VOICE]",
+            "ESTABLISHING NEURAL LINK...",
+            "CONNECTING TO HQ SERVER...",
+            "SYSTEM READY."
+        ];
+
+        let logIdx = 0;
+        function showLog() {
+            if (logIdx < logs.length) {
+                if (bootLog) bootLog.innerText = logs[logIdx];
+                logIdx++;
+                setTimeout(showLog, 300 + Math.random() * 500);
+            } else {
+                if (bootScreen) {
+                    bootScreen.style.transition = "opacity 1s";
+                    bootScreen.style.opacity = 0;
+                    setTimeout(() => bootScreen.remove(), 1000);
+                }
+            }
+        }
+
+        // Start Boot
+        showLog();
 
         setInterval(updateStats, 2000);
         updateStats();
